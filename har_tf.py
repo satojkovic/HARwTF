@@ -205,7 +205,7 @@ def main():
                     feed_dict={x: batch_x,
                                y: batch_y})
                 avg_cost += (c / total_batch)
-            if epoch % display_step == 1:
+            if epoch % display_step == 0:
                 print("Epoch %04d" % (epoch + 1),
                       "cost = {:.9f}".format(avg_cost))
         print('Training finished.')
