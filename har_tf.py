@@ -160,18 +160,18 @@ def main():
     biases = {
         'conv1':
         tf.Variable(
-            tf.constant(0.0, shape=[channels['input'] * channels['conv1']])),
+            tf.constant(0.01, shape=[channels['input'] * channels['conv1']])),
         'conv2':
         tf.Variable(
             tf.constant(
-                0.0,
+                0.01,
                 shape=[
                     channels['input'] * channels['conv1'] * channels['conv2']
                 ])),
         'fc':
-        tf.Variable(tf.constant(0.0, shape=[channels['fc']])),
+        tf.Variable(tf.constant(0.01, shape=[channels['fc']])),
         'out':
-        tf.Variable(tf.constant(0.0, shape=[n_labels])),
+        tf.Variable(tf.constant(0.01, shape=[n_labels])),
     }
 
     # construct a model
