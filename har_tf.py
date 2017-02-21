@@ -179,10 +179,11 @@ def main():
     pred = HarCnn(x, weights, biases, net)
 
     # loss
-    learning_rate = 0.001
+    learning_rate = 0.0001
     cross_entropy = tf.reduce_sum(
         tf.nn.softmax_cross_entropy_with_logits(labels=y, logits=pred))
-    train_step = tf.train.AdamOptimizer(learning_rate).minimize(cross_entropy)
+    train_step = tf.train.RMSPropOptimizer(learning_rate).minimize(
+        cross_entropy)
 
     # initialize all variable
     init = tf.global_variables_initializer()
