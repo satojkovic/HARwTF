@@ -6,6 +6,8 @@ import pandas as pd
 import os
 import numpy as np
 from scipy import stats
+import pickle
+import sys
 
 channels = {
     'input': 3,
@@ -24,6 +26,7 @@ n_labels = 6  # Downstairs, Jogging, Sitting, Standing, Upstairs, Walking
 kernel_size = 60
 
 DATASET_FILE = os.path.join('WISDM_ar_v1.1', 'WISDM_ar_v1.1_raw.txt')
+PICKLE_FNAME = 'WISDM_ar_v1.1.pickle'
 
 column_names = ['user', 'activity', 'timestamp', 'x-axis', 'y-axis', 'z-axis']
 
@@ -75,7 +78,7 @@ def windows(data, size):
         start += (size / 2)
 
 
-def segment_signal(data, window_size=90):
+def segment_signal(data, fname, window_size=90):
     segments = np.empty((0, window_size, 3))
     labels = np.empty((0))
     for (start, end) in windows(data['timestamp'], window_size):
@@ -88,10 +91,28 @@ def segment_signal(data, window_size=90):
             segments = np.vstack([segments, np.dstack([x, y, z])])
             labels = np.append(labels,
                                stats.mode(data['activity'][start:end])[0][0])
+    # save segments and labels as a pickle file
+    with open(fname, 'wb') as f:
+        pickle.dump([segments, labels], f)
+    return segments, labels
+
+
+def read_segments_and_labels(fname):
+    with open(fname, 'rb') as f:
+        segments, labels = pickle.load(f)
     return segments, labels
 
 
 def main():
+    if len(sys.argv) > 1:
+        # read dataset from a pickle file
+        segments, labels = read_segments_and_labels(sys.argv[1])
+    else:
+        # generate new dataset and save as a pickle file for future use.
+        fname = PICKLE_FNAME
+        dataset = pd.read_csv(DATASET_FILE, header=None, names=column_names)
+        segments, labels = segment_signal(dataset, fname)
+
     x = tf.placeholder(tf.float32, [
         None,
         input_height,
@@ -101,8 +122,6 @@ def main():
     y = tf.placeholder(tf.float32, [None, n_labels])
 
     # load dataset
-    dataset = pd.read_csv(DATASET_FILE, header=None, names=column_names)
-    segments, labels = segment_signal(dataset)
     labels = np.asarray(pd.get_dummies(labels), dtype=np.int8)
     reshaped_segments = segments.reshape(
         len(segments), 1, input_width, channels['input'])
