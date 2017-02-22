@@ -184,6 +184,7 @@ def main():
         tf.nn.softmax_cross_entropy_with_logits(labels=y, logits=pred))
     train_step = tf.train.RMSPropOptimizer(learning_rate).minimize(
         cross_entropy)
+    tf.summary.scalar('cross_entropy', cross_entropy)
 
     # initialize all variable
     init = tf.global_variables_initializer()
@@ -195,20 +196,24 @@ def main():
     display_step = 1
     with tf.Session() as sess:
         sess.run(init)
+        summary_writer = tf.summary.FileWriter('/tmp/Har_TF', graph=sess.graph)
+        summary_op = tf.summary.merge_all()
+
         for epoch in range(training_epochs):
             avg_cost = 0
             for b in range(total_batch):
                 offset = (b * batch_size) % (total_batch)
                 batch_x = train_x[offset:(offset + batch_size), :, :, :]
                 batch_y = train_y[offset:(offset + batch_size), :]
+                feed_dict = {x: batch_x, y: batch_y}
                 _, c = sess.run(
-                    [train_step, cross_entropy],
-                    feed_dict={x: batch_x,
-                               y: batch_y})
+                    [train_step, cross_entropy], feed_dict=feed_dict)
                 avg_cost += (c / total_batch)
             if epoch % display_step == 0:
                 print("Epoch %04d" % (epoch + 1),
                       "cost = {:.9f}".format(avg_cost))
+                summary_str = sess.run(summary_op, feed_dict=feed_dict)
+                summary_writer.add_summary(summary_str, epoch)
         print('Training finished.')
 
         # eval for the test set
